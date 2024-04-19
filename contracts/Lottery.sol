@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 contract Lottery {
-    
-    uint256 private constant JACKPOT_CHANCE = 10;
+    address public owner;
+    uint256 private jackPotOdds = 10;
 
     uint256 private prizePool;
     uint256 private jackPot;
@@ -13,8 +13,17 @@ contract Lottery {
     event ANewPlayerEnrolled(string message);
 
     constructor(){   
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Fonction reserver au owner");
+        _;
     }
     
+    function setJackPotOdds(uint256 newOdds) public onlyOwner {        
+        jackPotOdds = newOdds;
+    }
     function getPricePool() public view returns (uint) {
         return prizePool;
     }
@@ -46,7 +55,7 @@ contract Lottery {
     }
 
     function getAWinner() public returns(string memory){
-        require(players.length == 10, "We do not have 10 participants yet");
+        require(players.length == 10, string(abi.encodePacked("We do not have 10 participants yet we have: ", players.length)));
         uint nbOfPlayers = players.length;
         uint randomHash = uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
         uint winnerIndex = randomHash % nbOfPlayers;
@@ -58,10 +67,10 @@ contract Lottery {
         return player[winner];
     }
 
-    function getPrizePool() private view returns (uint256){
+    function getCalculatedPrizePool() public view returns (uint256){
         uint256 effectivePrize;        
         uint randomHash = uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
-        bool isJackpot = (randomHash % 100) < JACKPOT_CHANCE;
+        bool isJackpot = (randomHash % 100) < jackPotOdds;
 
         if(isJackpot){
             effectivePrize = prizePool + jackPot;
@@ -70,8 +79,8 @@ contract Lottery {
         return effectivePrize;
     }
     function sendPrize(address winner) private {
-        uint prize = prizePool;
+      /*  uint prize = prizePool;
         prizePool = 0;
-        payable(winner).transfer(prize);
+        payable(winner).transfer(prize);*/
     }
 }
